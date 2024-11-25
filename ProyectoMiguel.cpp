@@ -21,7 +21,7 @@ private:
     int edad;  
 };
 
-// Función para gestionar pacientes
+// Función para gestionar pacientes 
 void gestionarPacientes(vector<Paciente>& pacientes) {
     int opcion;
     do {
