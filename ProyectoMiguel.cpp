@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <limits>
 //#include "Windows.h"
 
 using namespace std; // Para evitar escribir continuamente std
@@ -22,6 +23,24 @@ private:
     string nombre;
     int edad;
 };
+
+int leerNumero(const string& mensaje) {
+    int numero;
+    while (true) {
+        cout << mensaje;
+        cin >> numero;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Por favor escriba la edad en números." << endl;
+        }
+        else {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return numero;
+        }
+    }
+}
 
 void guardarPacientes(const vector<Paciente>& pacientes) {
     ofstream archivo("pacientes.txt", ios::out);
