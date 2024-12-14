@@ -1,27 +1,67 @@
 ﻿#include <iostream>
 #include <string>
 #include <vector>
-#include "Windows.h"
+#include <fstream>
+#include <sstream>
+//#include "Windows.h"
 
-using namespace std;  // Para evita escribir std::
-
+using namespace std; // Para evitar escribir continuamente std
 
 class Paciente {
 public:
-    
     Paciente(string nombre, int edad) : nombre(nombre), edad(edad) {}
 
-    
     void mostrarDetalles() const {
         cout << "Nombre: " << nombre << ", Edad: " << edad << " años" << endl;
     }
 
+    string getNombre() const { return nombre; }
+    int getEdad() const { return edad; }
+
 private:
     string nombre;
-    int edad;  
+    int edad;
 };
 
-// Función para gestionar pacientes 
+void guardarPacientes(const vector<Paciente>& pacientes) {
+    ofstream archivo("pacientes.txt", ios::out);
+    if (!archivo) {
+        cerr << "Error al abrir el archivo para guardar los pacientes." << endl;
+        return;
+    }
+
+    for (const auto& paciente : pacientes) {
+        archivo << paciente.getNombre() << "," << paciente.getEdad() << endl;
+    }
+
+    archivo.close();
+    cout << "Pacientes guardados correctamente." << endl;
+}
+
+void cargarPacientes(vector<Paciente>& pacientes) {
+    ifstream archivo("pacientes.txt", ios::in);
+    if (!archivo) {
+        cout << "No se encontró el archivo de pacientes. Comenzando con una lista vacía." << endl;
+        return;
+    }
+
+    string linea;
+    while (getline(archivo, linea)) {
+        stringstream ss(linea);
+        string nombre;
+        int edad;
+
+        getline(ss, nombre, ',');
+        ss >> edad;               
+        if (!nombre.empty()) {
+            pacientes.emplace_back(nombre, edad);
+        }
+    }
+
+    archivo.close();
+    cout << "Pacientes cargados correctamente." << endl;
+}
+
 void gestionarPacientes(vector<Paciente>& pacientes) {
     int opcion;
     do {
@@ -34,7 +74,6 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
 
         switch (opcion) {
         case 1: {
-            // Registrar nuevo paciente
             string nombre;
             int edad;
             cout << "Ingrese el nombre del paciente: ";
@@ -48,7 +87,6 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
             break;
         }
         case 2: {
-         
             cout << "\n=== Lista de Pacientes ===" << endl;
             if (pacientes.empty()) {
                 cout << "No hay pacientes registrados." << endl;
@@ -72,8 +110,10 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
 
 // Menú principal
 int main() {
-    SetConsoleOutputCP(1252);
+    // SetConsoleOutputCP(1252);  // Para el texto en Windows
     vector<Paciente> pacientes;
+
+    cargarPacientes(pacientes);
 
     int opcion;
     do {
@@ -88,6 +128,7 @@ int main() {
             gestionarPacientes(pacientes);
             break;
         case 2:
+            guardarPacientes(pacientes);
             cout << "Saliendo del programa. ¡Hasta luego!" << endl;
             break;
         default:
