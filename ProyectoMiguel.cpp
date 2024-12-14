@@ -6,7 +6,7 @@
 #include <limits>
 //#include "Windows.h"
 
-using namespace std;
+using namespace std; // Para evitar escribir continuamente std
 
 class Paciente {
 public:
@@ -45,6 +45,29 @@ private:
     string especialidad;
     bool disponible;
 };
+
+class CitaMedica {
+public:
+    CitaMedica(string paciente, string medico, string fecha, string hora)
+        : paciente(paciente), medico(medico), fecha(fecha), hora(hora) {}
+
+    void mostrarDetalles() const {
+        cout << "Paciente: " << paciente << ", Médico: " << medico
+            << ", Fecha: " << fecha << ", Hora: " << hora << endl;
+    }
+
+    string getPaciente() const { return paciente; }
+    string getMedico() const { return medico; }
+    string getFecha() const { return fecha; }
+    string getHora() const { return hora; }
+
+private:
+    string paciente;
+    string medico;
+    string fecha;
+    string hora;
+};
+
 
 int leerNumero(const string& mensaje) {
     int numero;
@@ -93,6 +116,57 @@ void guardarMedicos(const vector<Medico>& medicos) {
 
     archivo.close();
     cout << "Médicos guardados correctamente." << endl;
+}
+
+void registrarCita(vector<CitaMedica>& citas, const vector<Paciente>& pacientes, const vector<Medico>& medicos) {
+    if (pacientes.empty()) {
+        cout << "Sin pacientes registrados" << endl;
+        return;
+    }
+
+    if (medicos.empty()) {
+        cout << "Sin medicos registrados." << endl;
+        return;
+    }
+
+    cout << "\n=== Selecciona un Paciente ===" << endl;
+    for (size_t i = 0; i < pacientes.size(); ++i) {
+        cout << i + 1 << ". ";
+        pacientes[i].mostrarDetalles();
+    }
+
+    int pacienteSeleccionado;
+    do {
+        pacienteSeleccionado = leerNumero("Selecciona el paciente (1-" + to_string(pacientes.size()) + "): ");
+        if (pacienteSeleccionado < 1 || pacienteSeleccionado > static_cast<int>(pacientes.size())) {
+            cout << "No válido." << endl;
+        }
+    } while (pacienteSeleccionado < 1 || pacienteSeleccionado > static_cast<int>(pacientes.size()));
+    string paciente = pacientes[pacienteSeleccionado - 1].getNombre();
+
+    cout << "\n=== Selecciona un Médico ===" << endl;
+    for (size_t i = 0; i < medicos.size(); ++i) {
+        cout << i + 1 << ". ";
+        medicos[i].mostrarDetalles();
+    }
+
+    int medicoSeleccionado;
+    do {
+        medicoSeleccionado = leerNumero("Selecciona el médico (1-" + to_string(medicos.size()) + "): ");
+        if (medicoSeleccionado < 1 || medicoSeleccionado > static_cast<int>(medicos.size())) {
+            cout << "No válido" << endl;
+        }
+    } while (medicoSeleccionado < 1 || medicoSeleccionado > static_cast<int>(medicos.size()));
+    string medico = medicos[medicoSeleccionado - 1].getNombre();
+
+    string fecha, hora;
+    cout << "Ingrese la fecha de la cita (formato: DD/MM/YYYY): ";
+    cin >> fecha;
+    cout << "Ingrese la hora de la cita (formato: HH:MM): ";
+    cin >> hora;
+
+    citas.emplace_back(paciente, medico, fecha, hora);
+    cout << "Cita registrada." << endl;
 }
 
 void cargarPacientes(vector<Paciente>& pacientes) {
@@ -316,11 +390,83 @@ void gestionarMedicos(vector<Medico>& medicos) {
     } while (opcion != 3);
 }
 
+void listarCitas(const vector<CitaMedica>& citas) {
+    cout << "\n=== Lista de Citas ===" << endl;
+    if (citas.empty()) {
+        cout << "No hay citas registradas." << endl;
+    }
+    else {
+        for (const auto& cita : citas) {
+            cita.mostrarDetalles();
+        }
+    }
+}
+
+void eliminarCita(vector<CitaMedica>& citas) {
+    if (citas.empty()) {
+        cout << "No hay citas que eliminar." << endl;
+        return;
+    }
+
+    cout << "\n=== Eliminar Cita ===" << endl;
+    for (size_t i = 0; i < citas.size(); ++i) {
+        cout << i + 1 << ". ";
+        citas[i].mostrarDetalles();
+    }
+    cout << "0. Cancelar" << endl;
+
+    int seleccion;
+    do {
+        seleccion = leerNumero("Selecciona la cita a eliminar (0 para cancelar): ");
+        if (seleccion == 0) {
+            cout << "Cancelando operación..." << endl;
+            return;
+        }
+        else if (seleccion < 1 || seleccion > static_cast<int>(citas.size())) {
+            cout << "Selección no válida." << endl;
+        }
+    } while (seleccion < 0 || seleccion > static_cast<int>(citas.size()));
+
+    citas.erase(citas.begin() + (seleccion - 1));
+    cout << "Cita eliminada." << endl;
+}
+
+void gestionarCitas(vector<CitaMedica>& citas, const vector<Paciente>& pacientes, const vector<Medico>& medicos) {
+    int opcion;
+    do {
+        cout << "\n=== Gestión de Citas ===" << endl;
+        cout << "1. Registrar cita" << endl;
+        cout << "2. Listar citas" << endl;
+        cout << "3. Eliminar cita" << endl;
+        cout << "4. Volver al menú principal" << endl;
+        cout << "Selecciona una opción: ";
+        cin >> opcion;
+
+        switch (opcion) {
+        case 1:
+            registrarCita(citas, pacientes, medicos);
+            break;
+        case 2:
+            listarCitas(citas);
+            break;
+        case 3:
+            eliminarCita(citas);
+            break;
+        case 4:
+            cout << "Volviendo al menú principal..." << endl;
+            break;
+        default:
+            cout << "Opción no válida." << endl;
+            break;
+        }
+    } while (opcion != 4);
+}
 
 int main() {
     // SetConsoleOutputCP(1252);  // Para el texto en Windows
     vector<Paciente> pacientes;
     vector<Medico> medicos;
+    vector<CitaMedica> citas;
 
     cargarPacientes(pacientes);
     cargarMedicos(medicos);
@@ -330,7 +476,8 @@ int main() {
         cout << "\n=== Menú Principal ===" << endl;
         cout << "1. Gestionar pacientes" << endl;
         cout << "2. Gestionar médicos" << endl;
-        cout << "3. Salir" << endl;
+        cout << "3. Gestionar citas" << endl;
+        cout << "4. Salir" << endl;
         cout << "Selecciona una opción: ";
         cin >> opcion;
 
@@ -342,15 +489,18 @@ int main() {
             gestionarMedicos(medicos);
             break;
         case 3:
+            gestionarCitas(citas, pacientes, medicos);
+            break;
+        case 4:
             guardarPacientes(pacientes);
             guardarMedicos(medicos);
             cout << "Saliendo del programa." << endl;
             break;
         default:
-            cout << "Opción no válida." << endl;
+            cout << "No válido." << endl;
             break;
         }
-    } while (opcion != 3);
+    } while (opcion != 4);
 
     return 0;
 }
