@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <limits>
+#include <regex>
 //#include "Windows.h"
 
 using namespace std; // Para evitar escribir continuamente std
@@ -87,6 +88,40 @@ int leerNumero(const string& mensaje) {
     }
 }
 
+bool validarFecha(const string& fecha) {
+    regex formatoFecha("^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\\d{4}$");
+    return regex_match(fecha, formatoFecha);
+}
+
+bool validarHora(const string& hora) {
+    regex formatoHora("^([01][0-9]|2[0-3]):([0-5][0-9])$");
+    return regex_match(hora, formatoHora);
+}
+
+string leerFecha() {
+    string fecha;
+    do {
+        cout << "Ingrese la fecha (DD/MM/YYYY): ";
+        cin >> fecha;
+        if (!validarFecha(fecha)) {
+            cout << "Formato de fecha incorrecto. Intente de nuevo." << endl;
+        }
+    } while (!validarFecha(fecha));
+    return fecha;
+}
+
+string leerHora() {
+    string hora;
+    do {
+        cout << "Ingrese la hora (HH:MM): ";
+        cin >> hora;
+        if (!validarHora(hora)) {
+            cout << "Formato de hora incorrecto. Intente de nuevo." << endl;
+        }
+    } while (!validarHora(hora));
+    return hora;
+}
+
 void guardarPacientes(const vector<Paciente>& pacientes) {
     ofstream archivo("pacientes.txt", ios::out);
     if (!archivo) {
@@ -116,6 +151,24 @@ void guardarMedicos(const vector<Medico>& medicos) {
 
     archivo.close();
     cout << "Médicos guardados correctamente." << endl;
+}
+
+void guardarCitas(const vector<CitaMedica>& citas) {
+    ofstream archivo("citas.txt", ios::out);
+    if (!archivo) {
+        cerr << "Error al abrir el archivo citas.txt." << endl;
+        return;
+    }
+
+    for (const auto& cita : citas) {
+        archivo << cita.getPaciente() << ","
+            << cita.getMedico() << ","
+            << cita.getFecha() << ","
+            << cita.getHora() << endl;
+    }
+
+    archivo.close();
+    cout << "Citas guardadas correctamente." << endl;
 }
 
 void registrarCita(vector<CitaMedica>& citas, const vector<Paciente>& pacientes, const vector<Medico>& medicos) {
@@ -159,11 +212,8 @@ void registrarCita(vector<CitaMedica>& citas, const vector<Paciente>& pacientes,
     } while (medicoSeleccionado < 1 || medicoSeleccionado > static_cast<int>(medicos.size()));
     string medico = medicos[medicoSeleccionado - 1].getNombre();
 
-    string fecha, hora;
-    cout << "Ingrese la fecha de la cita (formato: DD/MM/YYYY): ";
-    cin >> fecha;
-    cout << "Ingrese la hora de la cita (formato: HH:MM): ";
-    cin >> hora;
+    string fecha = leerFecha();
+    string hora = leerHora();
 
     citas.emplace_back(paciente, medico, fecha, hora);
     cout << "Cita registrada." << endl;
@@ -217,6 +267,30 @@ void cargarMedicos(vector<Medico>& medicos) {
 
     archivo.close();
     cout << "Médicos cargados correctamente." << endl;
+}
+
+void cargarCitas(vector<CitaMedica>& citas, const vector<Paciente>& pacientes, const vector<Medico>& medicos) {
+    ifstream archivo("citas.txt", ios::in);
+    if (!archivo) {
+        cout << "No se encontró el archivo citas.txt. Creando nuevo..." << endl;
+        return;
+    }
+
+    string linea;
+    while (getline(archivo, linea)) {
+        stringstream ss(linea);
+        string paciente, medico, fecha, hora;
+
+        getline(ss, paciente, ',');
+        getline(ss, medico, ',');
+        getline(ss, fecha, ',');
+        getline(ss, hora, ',');
+
+        citas.emplace_back(paciente, medico, fecha, hora);
+    }
+
+    archivo.close();
+    cout << "Citas cargadas correctamente." << endl;
 }
 
 void gestionarPacientes(vector<Paciente>& pacientes) {
@@ -294,7 +368,7 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
             cout << "No válido." << endl;
             break;
         }
-    } while (opcion != 3);
+    } while (opcion != 4);
 }
 
 void gestionarMedicos(vector<Medico>& medicos) {
@@ -387,7 +461,7 @@ void gestionarMedicos(vector<Medico>& medicos) {
             cout << "Error, pruebe de nuevo." << endl;
             break;
         }
-    } while (opcion != 3);
+    } while (opcion != 4);
 }
 
 void listarCitas(const vector<CitaMedica>& citas) {
@@ -417,7 +491,7 @@ void eliminarCita(vector<CitaMedica>& citas) {
 
     int seleccion;
     do {
-        seleccion = leerNumero("Selecciona la cita a eliminar (0 para cancelar): ");
+        seleccion = leerNumero("Selecciona que cita (0 para cancelar): ");
         if (seleccion == 0) {
             cout << "Cancelando operación..." << endl;
             return;
@@ -445,6 +519,7 @@ void gestionarCitas(vector<CitaMedica>& citas, const vector<Paciente>& pacientes
         switch (opcion) {
         case 1:
             registrarCita(citas, pacientes, medicos);
+
             break;
         case 2:
             listarCitas(citas);
@@ -470,6 +545,7 @@ int main() {
 
     cargarPacientes(pacientes);
     cargarMedicos(medicos);
+    cargarCitas(citas, pacientes, medicos);
 
     int opcion;
     do {
@@ -494,6 +570,8 @@ int main() {
         case 4:
             guardarPacientes(pacientes);
             guardarMedicos(medicos);
+            guardarCitas(citas);
+             
             cout << "Saliendo del programa." << endl;
             break;
         default:
