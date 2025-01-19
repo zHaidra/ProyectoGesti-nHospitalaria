@@ -15,6 +15,15 @@ public:
 
     void mostrarDetalles() const {
         cout << "Nombre: " << nombre << ", Edad: " << edad << " años, DNI: " << dni << endl;
+        if (historialMedico.empty()) {
+            cout << "No hay historial médico registrado." << endl;
+        }
+        else {
+            cout << "Historial médico: " << endl;
+            for (const auto& entry : historialMedico) {
+                cout << "- " << entry << endl;
+            }
+        }
     }
 
     string getNombre() const { return nombre; }
@@ -22,18 +31,14 @@ public:
     string getDni() const { return dni; }
 
     void agregarHistorial(const string& historial) {
-        this->historialMedico = historial;
-    }
-
-    void mostrarHistorial() const {
-        cout << "Historial Médico: " << (historialMedico.empty() ? "No disponible" : historialMedico) << endl;
+        historialMedico.push_back(historial);
     }
 
 private:
     string nombre;
     int edad;
     string dni;
-    string historialMedico;
+    vector<string> historialMedico;
 };
 
 class Medico {
@@ -120,22 +125,10 @@ bool validarDNI(const string& dni) {
 
     string letras = "TRWAGMYFPDXBNJZSQVHLCKE";
     int numeros = stoi(dni.substr(0, 8));
-    char letraEsperada = letras[numeros % 23];
+    char letraEsperada = letras[numeros % 23]; 
     char letraProporcionada = toupper(dni.back());
 
     return letraEsperada == letraProporcionada;
-}
-
-string leerDNI() {
-    string dni;
-    do {
-        cout << "Ingrese el DNI (8 dígitos seguidos de una letra): ";
-        cin >> dni;
-        if (!validarDNI(dni)) {
-            cout << "DNI no válido. Intente nuevamente." << endl;
-        }
-    } while (!validarDNI(dni));
-    return dni;
 }
 
 string leerFecha() {
@@ -272,6 +265,8 @@ void cargarPacientes(vector<Paciente>& pacientes) {
     ifstream archivo("pacientes.txt", ios::in);
     if (!archivo) {
         cout << "No se encontró el archivo de pacientes. Creando nuevo..." << endl;
+        ofstream nuevoArchivo("pacientes.txt", ios::out);
+        nuevoArchivo.close();
         return;
     }
 
@@ -362,8 +357,17 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
             cin.ignore();
             getline(cin, nombre);
             edad = leerNumero("Ingrese la edad: ");
-            cout << "Ingrese el DNI del paciente: ";
-            dni = leerDNI();
+            while (true) {
+                cout << "Ingrese el DNI del paciente: ";
+                cin >> dni;
+
+                if (validarDNI(dni)) {
+                    break;
+                }
+                else {
+                    cout << "DNI inválido. Por favor ingrese un DNI válido." << endl;
+                }
+            }
 
             pacientes.emplace_back(nombre, edad, dni);
             cout << "Paciente registrado con éxito." << endl;
@@ -424,20 +428,23 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
                 cout << i + 1 << ". ";
                 pacientes[i].mostrarDetalles();
             }
+
             int seleccion = leerNumero("Seleccione el paciente para añadir historial médico: ");
             if (seleccion < 1 || seleccion > static_cast<int>(pacientes.size())) {
                 cout << "Selección no válida." << endl;
                 break;
             }
 
-            cin.ignore();
             cout << "Ingrese el historial médico: ";
             string historial;
             getline(cin, historial);
+
             pacientes[seleccion - 1].agregarHistorial(historial);
+
             cout << "Historial médico añadido con éxito." << endl;
             break;
         }
+
         case 5:
             cout << "Volviendo al menú principal..." << endl;
             break;
