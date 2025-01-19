@@ -11,18 +11,29 @@ using namespace std; // Para evitar escribir continuamente std
 
 class Paciente {
 public:
-    Paciente(string nombre, int edad) : nombre(nombre), edad(edad) {}
+    Paciente(string nombre, int edad, string dni) : nombre(nombre), edad(edad), dni(dni) {}
 
     void mostrarDetalles() const {
-        cout << "Nombre: " << nombre << ", Edad: " << edad << " años" << endl;
+        cout << "Nombre: " << nombre << ", Edad: " << edad << " años, DNI: " << dni << endl;
     }
 
     string getNombre() const { return nombre; }
     int getEdad() const { return edad; }
+    string getDni() const { return dni; }
+
+    void agregarHistorial(const string& historial) {
+        this->historialMedico = historial;
+    }
+
+    void mostrarHistorial() const {
+        cout << "Historial Médico: " << (historialMedico.empty() ? "No disponible" : historialMedico) << endl;
+    }
 
 private:
     string nombre;
     int edad;
+    string dni;
+    string historialMedico;
 };
 
 class Medico {
@@ -49,24 +60,27 @@ private:
 
 class CitaMedica {
 public:
-    CitaMedica(string paciente, string medico, string fecha, string hora)
-        : paciente(paciente), medico(medico), fecha(fecha), hora(hora) {}
+    CitaMedica(string paciente, string medico, string fecha, string hora, string sintomas = "")
+        : paciente(paciente), medico(medico), fecha(fecha), hora(hora), sintomas(sintomas) {}
 
     void mostrarDetalles() const {
         cout << "Paciente: " << paciente << ", Médico: " << medico
-            << ", Fecha: " << fecha << ", Hora: " << hora << endl;
+            << ", Fecha: " << fecha << ", Hora: " << hora
+            << ", Síntomas: " << sintomas << endl;
     }
 
     string getPaciente() const { return paciente; }
     string getMedico() const { return medico; }
     string getFecha() const { return fecha; }
     string getHora() const { return hora; }
+    string getSintomas() const { return sintomas; }
 
 private:
     string paciente;
     string medico;
     string fecha;
     string hora;
+    string sintomas;
 };
 
 
@@ -98,6 +112,32 @@ bool validarHora(const string& hora) {
     return regex_match(hora, formatoHora);
 }
 
+bool validarDNI(const string& dni) {
+    regex formatoDNI("^[0-9]{8}[A-Za-z]$");
+    if (!regex_match(dni, formatoDNI)) {
+        return false;
+    }
+
+    string letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+    int numeros = stoi(dni.substr(0, 8));
+    char letraEsperada = letras[numeros % 23];
+    char letraProporcionada = toupper(dni.back());
+
+    return letraEsperada == letraProporcionada;
+}
+
+string leerDNI() {
+    string dni;
+    do {
+        cout << "Ingrese el DNI (8 dígitos seguidos de una letra): ";
+        cin >> dni;
+        if (!validarDNI(dni)) {
+            cout << "DNI no válido. Intente nuevamente." << endl;
+        }
+    } while (!validarDNI(dni));
+    return dni;
+}
+
 string leerFecha() {
     string fecha;
     do {
@@ -120,6 +160,14 @@ string leerHora() {
         }
     } while (!validarHora(hora));
     return hora;
+}
+
+string leerSintomas() {
+    cin.ignore();
+    cout << "Describa los síntomas: ";
+    string sintomas;
+    getline(cin, sintomas);
+    return sintomas;
 }
 
 void guardarPacientes(const vector<Paciente>& pacientes) {
@@ -214,8 +262,9 @@ void registrarCita(vector<CitaMedica>& citas, const vector<Paciente>& pacientes,
 
     string fecha = leerFecha();
     string hora = leerHora();
+    string sintomas = leerSintomas();
 
-    citas.emplace_back(paciente, medico, fecha, hora);
+    citas.emplace_back(paciente, medico, fecha, hora, sintomas);
     cout << "Cita registrada." << endl;
 }
 
@@ -229,13 +278,13 @@ void cargarPacientes(vector<Paciente>& pacientes) {
     string linea;
     while (getline(archivo, linea)) {
         stringstream ss(linea);
-        string nombre;
+        string nombre, dni;
         int edad;
 
         getline(ss, nombre, ',');
         ss >> edad;
         if (!nombre.empty()) {
-            pacientes.emplace_back(nombre, edad);
+            pacientes.emplace_back(nombre, edad, dni);
         }
     }
 
@@ -299,24 +348,28 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
         cout << "\n=== Gestión de Pacientes ===" << endl;
         cout << "1. Registrar paciente" << endl;
         cout << "2. Listar pacientes" << endl;
-        cout << "3. Eliminar médico" << endl;
-        cout << "4. Volver al menú principal" << endl;
-        cout << "Selecciona una opción: ";
+        cout << "3. Eliminar paciente" << endl;
+        cout << "4. Añadir historial médico" << endl;
+        cout << "5. Volver al menú principal" << endl;
+        cout << "Seleccione una opción: ";
         cin >> opcion;
 
         switch (opcion) {
         case 1: {
-            string nombre;
+            string nombre, dni;
             int edad;
             cout << "Ingrese el nombre del paciente: ";
             cin.ignore();
             getline(cin, nombre);
-            edad = leerNumero("Ingrese la edad del paciente: ");
+            edad = leerNumero("Ingrese la edad: ");
+            cout << "Ingrese el DNI del paciente: ";
+            dni = leerDNI();
 
-            pacientes.emplace_back(nombre, edad);
+            pacientes.emplace_back(nombre, edad, dni);
             cout << "Paciente registrado con éxito." << endl;
             break;
         }
+
         case 2: {
             cout << "\n=== Lista de Pacientes ===" << endl;
             if (pacientes.empty()) {
@@ -361,14 +414,38 @@ void gestionarPacientes(vector<Paciente>& pacientes) {
             }
             break;
         }
-        case 4:
+        case 4: {
+            if (pacientes.empty()) {
+                cout << "No hay pacientes registrados." << endl;
+                break;
+            }
+
+            for (size_t i = 0; i < pacientes.size(); ++i) {
+                cout << i + 1 << ". ";
+                pacientes[i].mostrarDetalles();
+            }
+            int seleccion = leerNumero("Seleccione el paciente para añadir historial médico: ");
+            if (seleccion < 1 || seleccion > static_cast<int>(pacientes.size())) {
+                cout << "Selección no válida." << endl;
+                break;
+            }
+
+            cin.ignore();
+            cout << "Ingrese el historial médico: ";
+            string historial;
+            getline(cin, historial);
+            pacientes[seleccion - 1].agregarHistorial(historial);
+            cout << "Historial médico añadido con éxito." << endl;
+            break;
+        }
+        case 5:
             cout << "Volviendo al menú principal..." << endl;
             break;
         default:
-            cout << "No válido." << endl;
+            cout << "Opción no válida." << endl;
             break;
         }
-    } while (opcion != 4);
+    } while (opcion != 5);
 }
 
 void gestionarMedicos(vector<Medico>& medicos) {
@@ -553,7 +630,7 @@ int main() {
         cout << "1. Gestionar pacientes" << endl;
         cout << "2. Gestionar médicos" << endl;
         cout << "3. Gestionar citas" << endl;
-        cout << "4. Salir" << endl;
+        cout << "4. Guardar y Salir" << endl;
         cout << "Selecciona una opción: ";
         cin >> opcion;
 
