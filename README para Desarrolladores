@@ -1,0 +1,85 @@
+# README para Desarrolladores
+
+## Descripción General
+Este proyecto implementa un **sistema de gestión hospitalaria** en C++ que permite:
+- Administrar pacientes (registro, listado, eliminación, historial médico).
+- Administrar médicos (registro, listado, eliminación).
+- Gestionar citas médicas (registro, listado, eliminación).
+
+El sistema utiliza conceptos de **Programación Orientada a Objetos (POO)** y técnicas de validación y manejo de archivos para garantizar la persistencia de los datos.
+
+---
+
+## Estructura del Proyecto
+
+### Clases Principales
+1. **`Paciente`**
+   - Representa a un paciente.
+   - Atributos: nombre, edad, DNI, historial médico.
+   - Métodos clave:
+     - `mostrarDetalles`: Muestra información del paciente.
+     - `agregarHistorial`: Añade registros al historial médico.
+
+2. **`Medico`**
+   - Representa a un médico.
+   - Atributos: nombre, especialidad, disponibilidad.
+   - Métodos clave:
+     - `mostrarDetalles`: Muestra información del médico.
+     - `setDisponibilidad`: Cambia el estado de disponibilidad.
+
+3. **`CitaMedica`**
+   - Representa una cita médica.
+   - Atributos: paciente, médico, fecha, hora, síntomas.
+   - Métodos clave:
+     - `mostrarDetalles`: Muestra información de la cita.
+
+---
+
+### Validaciones
+- **Fecha**: `validarFecha` (formato DD/MM/YYYY).
+- **Hora**: `validarHora` (formato HH:MM).
+- **DNI**: `validarDNI` (formato español).
+
+### Persistencia de Datos
+Los datos de pacientes, médicos y citas se guardan en archivos de texto:
+- `pacientes.txt`
+- `medicos.txt`
+- `citas.txt`
+
+Funciones clave:
+- `guardarPacientes`, `guardarMedicos`, `guardarCitas`.
+- `cargarPacientes`, `cargarMedicos`, `cargarCitas`.
+
+---
+
+## Requisitos
+- Compilador compatible con C++11 o superior (ejemplo: `g++`).
+- Sistema operativo: Windows, Linux o macOS.
+
+---
+
+## Compilación y Ejecución
+1. Compila el código:
+   ```bash
+   g++ -o gestion_hospitalaria main.cpp
+   ```
+
+2. Ejecuta el programa:
+   ```bash
+   ./gestion_hospitalaria
+   ```
+
+---
+
+## Estructura del Menú Principal
+1. **Gestionar Pacientes**: Registra, lista, elimina o añade historial médico a pacientes.
+2. **Gestionar Médicos**: Registra, lista o elimina médicos.
+3. **Gestionar Citas**: Registra, lista o elimina citas médicas.
+4. **Guardar y Salir**: Guarda los datos en archivos y finaliza el programa.
+
+---
+
+## Buenas Prácticas
+- Verifica que los datos se ingresen en los formatos válidos.
+- Los archivos deben estar en la misma carpeta que el ejecutable.
+- Maneja errores en la entrada del usuario y los archivos usando las funciones de validación.
